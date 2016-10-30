@@ -181,6 +181,43 @@
         :reached
         :started))))
 
+;; xchar is the approximate width of a letter in pixels
+;; (let [r 12
+;;       hem-size (* 4 r)
+;; node width is 48
+(defn rewrap-label [label]
+  (when label
+    (let [raw (string/replace label "\n" "")
+          len (count raw) ;; avoid fencepost
+          xchar 9 ;; for bold
+          hem-width 89
+          n (inc (quot (* (dec len) xchar) hem-width)) ;; desired lines
+          ;; naive partition based on length
+          m (quot len n) ;; break every mth char
+          ;; parts (if (= n 1)
+          ;;         (list raw)
+          ;;         (partition m m "" raw))
+          ;; label (apply str (map #(apply str (conj (vec %) "\n")) parts))
+          ;; keeps a trailing newline
+          ;; --------------------
+          ;; break space, -
+          ]
+      ;; (str n ":" m ":" label)
+      ;; label
+      ;; i is the number chars since a newline
+      (loop [label "" i 0 ch (first raw) more (rest raw)]
+        (if-not ch
+          label
+          (let [[newline i] (if (and
+                                  (>= i (quot (* 0.65 m) 1))
+                                  (or (= ch " ") (= ch "-"))
+                                  (> (- len (count label)) 5))
+                              ["\n" 0]
+                              ["" (inc i)])
+                label (str label ch newline)]
+            (recur label i (first more) (rest more)))))
+      )))
+
 (defn node [{:keys[plans/ui-opts plan/plid node/id
                    node/type node/state node/x node/y node/hidden
                    node/label node/sequence-label
@@ -210,9 +247,12 @@
             use [:use {:class css :x x :y y :xlinkHref (str "#" xlink)
                        ;; :on-click #(nodeclick id)
                        }]
-            top (- y 13)
-            ychar 8
+            ;; top (- y 13)
+            top (- y 11)
+            ;; ychar 8
+            ychar 10.25
             ;; U+25B9 	WHITE RIGHT-POINTING SMALL TRIANGLE
+            label (rewrap-label label)
             label (str label (if label "\n")
                     (if sequence-label "▹ ") sequence-label)
             lines (if (not (empty? label)) (string/split label #"\n"))
